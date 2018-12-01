@@ -7,6 +7,7 @@ import json
 from flask import request
 from sqlalchemy import inspect
 from sqlalchemy.sql import select
+from flask_cors import CORS, cross_origin
 
 app = Flask(__name__)
 app.config['MYSQL_DATABASE_USER'] = 'sql7264364'
@@ -14,6 +15,8 @@ app.config['MYSQL_DATABASE_PASSWORD'] = 'vQcYAx9aes'
 app.config['MYSQL_DATABASE_DB'] = 'sql7264364'
 app.config['MYSQL_DATABASE_HOST'] = 'sql7.freemysqlhosting.net'
 engine = create_engine('mysql+mysqldb://sql7264364:vQcYAx9aes@sql7.freemysqlhosting.net/sql7264364')
+
+cors = CORS(app)
 
 db = SQLAlchemy(app)
 Base = automap_base()
@@ -31,6 +34,7 @@ class Place():
         self.Country = Country
     
 @app.route('/_get_current_dir')
+@cross_origin()
 def get_current_dir():
     WindDirection = Base.classes.Wind_Direction
     s = select([WindDirection])
@@ -38,6 +42,7 @@ def get_current_dir():
     return json.dumps([dict(r) for r in result])
 
 @app.route('/places', methods=['GET'])
+@cross_origin()
 def get_places():
     places = Base.classes.Place
     s = select([places])
@@ -48,6 +53,7 @@ def get_places():
     return json.dumps([p.__dict__ for p in Places])
 
 @app.route('/places', methods=['POST'])
+@cross_origin()
 def post_place():
     data =request.get_json()
     place = Base.classes.Place
@@ -56,6 +62,7 @@ def post_place():
     return json.dumps({'success':True}), 200, {'ContentType':'application/json'} 
 
 @app.route('/forecast', methods=['POST'])
+@cross_origin()
 def post_forecast():
     data =request.get_json()
     forecast = Base.classes.Weather_Forecast
@@ -83,6 +90,6 @@ def insert_type(main, desc):
     session.commit()
 
 if __name__ == '__main__':
-    app.run(debug=True)
-    print ("closing session")
+    app.run(host='0.0.0.0', port=1339, debug=True)
+    print("closing session")
     session.close_all()
