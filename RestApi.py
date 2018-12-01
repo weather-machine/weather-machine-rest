@@ -22,7 +22,6 @@ inspector = inspect(engine)
 conn = engine.connect()
         
 session = Session(engine)
-
 class Place():
     def __init__(self, Id, Name, Latitude, Longitude, Country):
         self.Id = Id
@@ -80,7 +79,8 @@ def get_type(main, desc):
 
 def insert_type(main, desc):
     WT = Base.classes.Weather_Type
-    session.add(WT(Main=main,Desc=desc))
+    session.add(WT(Main=main,Description=desc))
+    session.commit()
 
 if __name__ == '__main__':
     app.run(debug=True)
