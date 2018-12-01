@@ -1,0 +1,1 @@
+{"PlaceId": 1, "Main": "Test3", "Desc":"Test3", "Wind_DirId": 1, "Date": "2008-11-11", "Temperature": 20, "Temperature_Max": 20, "Temperature_Min": 20, "Cloud_cover": 10, "Humidity_percent": 10, "Pressure_mb": 10, "Wind_speed": 10, "IsForecast": 0}

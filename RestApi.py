@@ -30,7 +30,7 @@ class Place():
         self.Latitude = Latitude
         self.Longitude = Longitude
         self.Country = Country
-        
+    
 @app.route('/_get_current_dir')
 def get_current_dir():
     WindDirection = Base.classes.Wind_Direction
@@ -47,6 +47,7 @@ def get_places():
     for r in result:
         Places.append(Place(r["Id"],r["Name"],str(r["Latitude"]),str(r["Longitude"]), r["Country"]))
     return json.dumps([p.__dict__ for p in Places])
+
 @app.route('/places', methods=['POST'])
 def post_place():
     data =request.get_json()
@@ -59,10 +60,29 @@ def post_place():
 def post_forecast():
     data =request.get_json()
     forecast = Base.classes.Weather_Forecast
-    session.add(forecast(PlaceId = data["PlaceId"], Weather_TypeId= data["Weather_TypeId"], Wind_DirId = data["Wind_DirId"], Date = data["Date"], Temperature = data["Temperature"], Temperature_Max = data["Temperature_Max"], Temperature_Min = data["Temperature_Min"], Cloud_cover = data["Cloud_cover"], Humidity_percent = data["Humidity_percent"], Pressure_mb = data["Pressure_mb"], Wind_speed = data["Wind_speed"], IsForecast = data["IsForecast"]))
+    wtId = calculateTypeId(data["Main"], data["Desc"])
+    
+    session.add(forecast(PlaceId = data["PlaceId"], Weather_TypeId= wtId, Wind_DirId = data["Wind_DirId"], Date = data["Date"], Temperature = data["Temperature"], Temperature_Max = data["Temperature_Max"], Temperature_Min = data["Temperature_Min"], Cloud_cover = data["Cloud_cover"], Humidity_percent = data["Humidity_percent"], Pressure_mb = data["Pressure_mb"], Wind_speed = data["Wind_speed"], IsForecast = data["IsForecast"]))
     session.commit()
     return json.dumps({'success':True}), 200, {'ContentType':'application/json'} 
 
+def calculateTypeId(main, desc):
+    wtId = get_type(main, desc)
+    if(wtId<0):
+        insert_type(main, desc)
+        wtId=get_type(main, desc)
+    return wtId
+
+def get_type(main, desc):
+    Weather_Type = Base.classes.Weather_Type
+    for wt in session.query(Weather_Type).filter_by(Main=main, Description=desc):
+        return wt.Id
+
+def insert_type(main, desc):
+    WT = Base.classes.Weather_Type
+    session.add(WT(Main=main,Desc=desc))
+
 if __name__ == '__main__':
     app.run(debug=True)
+    print ("closing session")
     session.close_all()
