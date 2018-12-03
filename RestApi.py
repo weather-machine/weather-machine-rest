@@ -10,9 +10,9 @@ from sqlalchemy.sql import select
 from flask_cors import CORS, cross_origin
 
 app = Flask(__name__)
-app.config['MYSQL_DATABASE_USER'] = 'sql7264364'
-app.config['MYSQL_DATABASE_PASSWORD'] = 'vQcYAx9aes'
-app.config['MYSQL_DATABASE_DB'] = 'sql7264364'
+app.config['MYSQL_DATABASE_USER'] = 'sql7268281'
+app.config['MYSQL_DATABASE_PASSWORD'] = 'HQXEWyTunX'
+app.config['MYSQL_DATABASE_DB'] = 'sql7268281'
 app.config['MYSQL_DATABASE_HOST'] = 'sql7.freemysqlhosting.net'
 engine = create_engine('mysql+mysqldb://sql7264364:vQcYAx9aes@sql7.freemysqlhosting.net/sql7264364')
 
