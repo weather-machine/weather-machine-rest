@@ -14,7 +14,7 @@ app.config['MYSQL_DATABASE_USER'] = 'sql7269522'
 app.config['MYSQL_DATABASE_PASSWORD'] = 'pwxmSWjpqa'
 app.config['MYSQL_DATABASE_DB'] = 'sql7269522'
 app.config['MYSQL_DATABASE_HOST'] = 'sql7.freemysqlhosting.net'
-engine = create_engine('mysql+mysqldb://sql7269522:pwxmSWjpqa@sql7.freemysqlhosting.net/sql7269522')
+engine = create_engine('mysql+mysqldb://sql7269522:pwxmSWjpqa@sql7.freemysqlhosting.net/sql7269522', pool_size=5000)
 
 cors = CORS(app)
 
