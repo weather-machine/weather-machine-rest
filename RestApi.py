@@ -4,7 +4,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import Session
 import json
-from flask import request
+from flask import request,requests
 from sqlalchemy import inspect
 from sqlalchemy.sql import select
 from flask_cors import CORS, cross_origin
@@ -74,6 +74,14 @@ def post_forecast():
     session.commit()
     session.close()
     return json.dumps({'success':True}), 200, {'ContentType':'application/json'}
+
+@app.route('/forecast', methods=['GET'])
+@cross_origin()
+def get_forecast():
+    forecast = Base.classes.Forecast
+    data =request.get_json()
+    forecast = requests.get(cred.decisionRoute).content
+    return (json.dumps(forecast.__dict__))
 
 def calculateTypeId(main, desc):
     wtId = get_type(main, desc)
