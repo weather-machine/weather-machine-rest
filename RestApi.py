@@ -8,13 +8,15 @@ from flask import request
 from sqlalchemy import inspect
 from sqlalchemy.sql import select
 from flask_cors import CORS, cross_origin
+
+import credentials as cred
     
 app = Flask(__name__)
-app.config['MYSQL_DATABASE_USER'] = 'sql7269522'
-app.config['MYSQL_DATABASE_PASSWORD'] = 'pwxmSWjpqa'
-app.config['MYSQL_DATABASE_DB'] = 'sql7269522'
-app.config['MYSQL_DATABASE_HOST'] = 'sql7.freemysqlhosting.net'
-engine = create_engine('mysql+mysqldb://sql7269522:pwxmSWjpqa@sql7.freemysqlhosting.net/sql7269522', pool_size=5000)
+app.config['MYSQL_DATABASE_USER'] = cred.USER
+app.config['MYSQL_DATABASE_PASSWORD'] = cred.PASSWORD
+app.config['MYSQL_DATABASE_DB'] = cred.DB
+app.config['MYSQL_DATABASE_HOST'] = cred.HOST
+engine = create_engine(cred.ENGINE, pool_size=5000)
 
 cors = CORS(app)
 

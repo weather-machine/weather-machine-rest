@@ -1,0 +1,6 @@
+USER = 'sql7269522'
+PASSWORD = 'pwxmSWjpqa'
+DB = 'sql7269522'
+HOST = 'sql7.freemysqlhosting.net'
+ENGINE = 'mysql+mysqldb://sql7269522:pwxmSWjpqa@sql7.freemysqlhosting.net/sql7269522'
+DECISION_ROUTE = 'localhost'
