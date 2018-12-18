@@ -80,9 +80,9 @@ def post_forecast():
 @app.route('/forecast', methods=['GET'])
 @cross_origin()
 def get_forecast():
-    forecast = Base.classes.Forecast
+    forecast = Base.classes.Weather_Forecast
     data =request.get_json()
-    forecast = requests.get(cred.decisionRoute).content
+    forecast = requests.get(cred.decisionRoute,'/',data['Name']).content
     return (json.dumps(forecast.__dict__))
 
 def calculateTypeId(main, desc):
