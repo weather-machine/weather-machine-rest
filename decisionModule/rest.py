@@ -238,6 +238,9 @@ def get_type(main, desc):
         return wt.Id
 
 
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=1339, debug=True)
+
 # TEST (with classes declaration):
 # session = Session(engine)
 # u1 = session.query(WindDirection).first()
