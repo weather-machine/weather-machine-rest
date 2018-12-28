@@ -2,6 +2,7 @@ from flask import Flask, request
 from flask_cors import CORS, cross_origin
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import create_engine, Column, Integer, String, Numeric, TIMESTAMP, ForeignKey, inspect
+from sqlalchemy.dialects.mysql import BIGINT, DOUBLE
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import Session
 
@@ -92,14 +93,14 @@ class WeatherForecast(Base):
     PlaceId = Column(ForeignKey('Place.Id'))
     Weather_TypeId = Column(ForeignKey('Weather_Type.Id'))
     Wind_DirId = Column(ForeignKey('Wind_Direction.Id'))
-    Date = Column(TIMESTAMP)
-    Temperature = Column(Numeric)
-    Temperature_Max = Column(Numeric)
-    Temperature_Min = Column(Numeric)
-    Cloud_cover = Column(Numeric)
-    Humidity_percent = Column(Numeric)
-    Pressure_mb = Column(Numeric)
-    Wind_speed = Column(Numeric)
+    Date = Column(BIGINT)
+    Temperature = Column(DOUBLE)
+    Temperature_Max = Column(DOUBLE)
+    Temperature_Min = Column(DOUBLE)
+    Cloud_cover = Column(DOUBLE)
+    Humidity_percent = Column(DOUBLE)
+    Pressure_mb = Column(DOUBLE)
+    Wind_speed = Column(DOUBLE)
     IsForecast = Column(Integer)
 
     def __init__(self, PlaceId, Weather_TypeId, Wind_DirId, Date, Temperature_Max, Temperature_Min, Temperature,
