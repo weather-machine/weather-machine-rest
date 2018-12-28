@@ -4,7 +4,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import Session
 import json
-from flask import request,requests
+from flask import request
 from sqlalchemy import inspect
 from sqlalchemy.sql import select
 from flask_cors import CORS, cross_origin
@@ -34,12 +34,12 @@ def get_forecast():
     data =request.get()
     Forecasts = Base.classes.Weather_Forecast
     PlaceId = getPlace(data)
-    s = select([Forecasts]).where(Forecasts.PlaceId = PlaceId, Forecasts.isForecast=0)
+    s = select([Forecasts]).where(Forecasts.PlaceId == PlaceId, Forecasts.isForecast == 0)
     result = conn.execute(s)
     currentWeather =[]
     for r in result: 
         currentWeather.append()
-    s = select([Forecasts]).where(Forecasts.PlaceId = PlaceId, Forecasts.isForecast=1)
+    s = select([Forecasts]).where(Forecasts.PlaceId == PlaceId, Forecasts.isForecast == 1)
     result = conn.execute(s)
     predictions = []
     for r in result: 
@@ -47,4 +47,8 @@ def get_forecast():
     FinalResult = make_decision(currentWeather, predictions)
 
 
-def make_decision(currentWeather, predictions)
+def make_decision(currentWeather, predictions):
+    return nil
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=1339, debug=True)
