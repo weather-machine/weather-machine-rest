@@ -1,3 +1,4 @@
+simplejson
 flask
 flask_sqlalchemy
 flask-cors

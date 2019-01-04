@@ -1,12 +1,13 @@
 from flask import Flask, request
 from flask_cors import CORS, cross_origin
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import create_engine, Column, Integer, String, Numeric, TIMESTAMP, ForeignKey, inspect
+from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, inspect
 from sqlalchemy.dialects.mysql import BIGINT, DOUBLE
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import Session
 
-import json
+import simplejson as json
+import time
 import decisionModule.credentials as cred
 
 
@@ -119,7 +120,8 @@ class WeatherForecast(Base):
         self.IsForecast = IsForecast
 
     def __str__(self):
-        return self.Id.__str__() + " - " + self.Main
+        return self.Id.__str__() + " - " + str(self.PlaceId) + str(self.Weather_TypeId) + str(self.Wind_DirId) + \
+               str(self.Date) + str(self.Temperature)
 
     def as_dict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
@@ -178,6 +180,15 @@ def post_forecast():
     return json.dumps({'success':True}), 200, {'ContentType':'application/json'}
 
 
+@app.route('/forecastForPlace', methods=['GET'])
+@cross_origin()
+def get_forecasts_for_place():
+    data = request.get_json()
+    id = get_place_id(latitude=data["Latitude"], longitude=data["Longitude"], name=data["Name"], country=data["Country"])
+    result = get_all_forecasts_for(id_place=id)
+    return change_to_json(result), 200, {'ContentType':'application/json'}
+
+
 # UTILS:
 def get_all(class_name):
     session = Session(engine)
@@ -208,9 +219,12 @@ def get_type_or_calculate(main, desc):
 # DATABASE OPERATIONS:
 def insert_place(name, latitude, longitude, country):
     session = Session(engine)
-    session.add(Place(name, latitude, longitude, country))
+    place = Place(name, latitude, longitude, country)
+    session.add(place)
     session.commit()
+    id = place.Id
     session.close()
+    return id
 
 
 def insert_type(main, desc):
@@ -237,6 +251,83 @@ def get_type(main, desc):
     session.close()
     for wt in session.query(WeatherType).filter_by(Main=main, Description=desc):
         return wt.Id
+
+
+def get_all_forecasts_for(id_place):
+    session = Session(engine)
+    session.close()
+    result = []
+    for wf in session.query(WeatherForecast).filter_by(PlaceId=id_place, IsForecast=1):
+        result.append(wf)
+    return result
+
+
+def get_actual_weather(id_place):
+    actual_time = 1546012049000  # TODO change to time.time()
+    all_weathers = get_all_actual_weathers(id_place, actual_time)
+    not_null_weathers = []
+    for weather in all_weathers:
+        if (weather.Weather_TypeId is not None) & (weather.Wind_DirId is not None) & (weather.Temperature is not None):
+            not_null_weathers.append(weather)
+    return not_null_weathers[0]
+
+
+def get_all_actual_weathers(id_place, date):
+    session = Session(engine)
+    session.close()
+    result = []
+    for wf in session.query(WeatherForecast).filter_by(PlaceId=id_place, Date=date, IsForecast=0):
+        result.append(wf)
+    return result
+
+
+# GET PLACE --3 versions
+def get_place_by_coordinates(latitude, longitude):
+    session = Session(engine)
+    session.close()
+    for result in session.query(Place).filter_by(Latitude=latitude, Longitude=longitude):
+        return result
+
+
+def get_place_by_name(name, country):
+    session = Session(engine)
+    session.close()
+    for result in session.query(Place).filter_by(Name=name, Country=country):
+        return result
+
+
+def get_place_by_all_data(latitude, longitude, name, country):
+    session = Session(engine)
+    session.close()
+    for result in session.query(Place).filter_by(Latitude=latitude, Longitude=longitude, Name=name, Country=country):
+        return result
+
+
+def is_acceptable_distance(first, second, param):
+    if (first is None) | (second is None):
+        return False
+    diff = abs(first - second)
+    if (param == 'latitude') & (diff < 0.005):
+        return True
+    if (param == 'longitude') & (diff < 0.1):
+        return True
+    return False
+
+
+# official - TO USE:
+def get_place_id(latitude, longitude, name, country):
+    place = get_place_by_all_data(latitude, longitude, name, country)
+    if place is not None:
+        return place.Id
+    place = get_place_by_coordinates(latitude, longitude)
+    if place is not None:
+        return place.Id
+    place = get_place_by_name(name, country)
+    lat_dist = is_acceptable_distance(latitude, place.Latitude, 'latitude')
+    long_dist = is_acceptable_distance(longitude, place.Longitude, 'longitude')
+    if lat_dist & long_dist:
+        return place.Id
+    return insert_place(name, latitude, longitude, country)
 
 
 if __name__ == '__main__':
