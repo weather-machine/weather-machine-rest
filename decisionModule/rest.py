@@ -1,3 +1,5 @@
+from __future__ import division
+
 from flask import Flask, request
 from flask_cors import CORS, cross_origin
 from flask_sqlalchemy import SQLAlchemy
@@ -5,9 +7,11 @@ from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, inspe
 from sqlalchemy.dialects.mysql import BIGINT, DOUBLE
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import Session
+from datetime import datetime
 
 import simplejson as json
 import time
+import numpy as np
 import decisionModule.credentials as cred
 
 
@@ -224,19 +228,19 @@ def get_forecasts_for_place():
     country = 'Poland'
     id_place = get_place_id(latitude=latitude, longitude=longitude, name=name, country=country)
     # END TO TEST
-    forecasts = get_all_forecasts_for(id_place=id_place)
-    resul = []
-    resul.append(get_actual_weather(id_place))
-    # TODO remove
-    for i in range(0, 24):
-        resul.append(forecasts[i])
-    #end todo
+    all_forecasts = get_all_forecasts_for(id_place=id_place)
+    actual_weather = get_actual_weather(id_place)
+    done_forecast = decide(actual_weather, all_forecasts)
 
-    result = change_all_record_to_wa(resul, id_place, name, latitude, longitude, country)
+    result = change_all_record_to_wa(done_forecast, id_place, name, latitude, longitude, country)
     return change_to_json(result), 200, {'ContentType':'application/json'}
 
 
 # UTILS:
+def get_most_common(list):
+    return max(set(list), key=list.count)
+
+
 def get_all(class_name):
     session = Session(engine)
     result = session.query(class_name).all()
@@ -278,6 +282,14 @@ def change_record_to_weather_answer(id_place, name, latitude, longitude, country
                            forecast.Temperature_Min, forecast.Temperature, forecast.Cloud_cover,
                            forecast.Humidity_percent, forecast.Pressure_mb, forecast.Wind_speed, forecast.IsForecast)
     return answer
+
+
+def get_all_forecast_for_timestamp(timestamp, all_forecasts):
+    result = []
+    for forecast in all_forecasts:
+        if forecast.Date == timestamp:
+            result.append(forecast)
+    return result
 
 
 # DATABASE OPERATIONS:
@@ -404,6 +416,83 @@ def get_place_id(latitude, longitude, name, country):
     if lat_dist & long_dist:
         return place.Id
     return insert_place(name, latitude, longitude, country)
+
+
+# DECISION MODULE:
+def create_one_forecast(list_of_forecasts, date):
+    Weather_TypeId = []
+    Wind_DirId = []
+    Date = date
+    Temperature = []
+    Temperature_Max = []
+    Temperature_Min = []
+    Cloud_cover = []
+    Humidity_percent = []
+    Pressure_mb = []
+    Wind_speed = []
+    IsForecast = 1
+    for i in list_of_forecasts:
+        Weather_TypeId.append(i.Weather_TypeId)
+        Wind_DirId.append(i.Wind_DirId)
+        Temperature.append(i.Temperature)
+        Temperature_Max.append(i.Temperature_Max)
+        Temperature_Min.append(i.Temperature_Min)
+        Cloud_cover.append(i.Cloud_cover)
+        Humidity_percent.append(i.Humidity_percent)
+        Pressure_mb.append(i.Pressure_mb)
+        Wind_speed.append(i.Wind_speed)
+    Weather_TypeId = get_most_common(Weather_TypeId)
+    Wind_DirId = get_most_common(Wind_DirId)
+    Temperature = list(filter(None.__ne__, Temperature))
+    if not Temperature:
+        Temperature = None
+    else:
+        Temperature = np.mean(Temperature)
+    Temperature_Max = list(filter(None.__ne__, Temperature_Max))
+    if not Temperature_Max:
+        Temperature_Max = None
+    else:
+        Temperature_Max = np.mean(Temperature_Max)
+    Temperature_Min = list(filter(None.__ne__, Temperature_Min))
+    if not Temperature_Min:
+        Temperature_Min = None
+    else:
+        Temperature_Min = np.mean(Temperature_Min)
+    Cloud_cover = list(filter(None.__ne__, Cloud_cover))
+    if not Cloud_cover:
+        Cloud_cover = None
+    else:
+        Cloud_cover = np.mean(Cloud_cover)
+    Humidity_percent = list(filter(None.__ne__, Humidity_percent))
+    Humidity_percent = np.mean(Humidity_percent)
+    Pressure_mb = list(filter(None.__ne__, Pressure_mb))
+    if not Cloud_cover:
+        Pressure_mb = None
+    else:
+        Pressure_mb = np.mean(Pressure_mb)
+    Wind_speed = list(filter(None.__ne__, Wind_speed))
+    Wind_speed = np.mean(Wind_speed)
+    return WeatherForecast(0, Weather_TypeId, Wind_DirId, Date, Temperature_Max, Temperature_Min, Temperature,
+                 Cloud_cover, Humidity_percent, Pressure_mb, Wind_speed, IsForecast)
+
+
+# RETURNS LIST OF FORECAST FOR PLACE
+def decide(actual_weather, all_forecasts):
+    # creating set of date >= actual
+    date_set = set()
+    for all in all_forecasts:
+        if actual_weather.Date <= all.Date:
+            date_set.add(all.Date)
+    date_set = sorted(date_set)
+    done_forecast = []
+    # first forecast - actual weather
+    # creating one forecast for datetime
+    done_forecast.append(actual_weather)
+    for x in date_set:
+        forecast = get_all_forecast_for_timestamp(x, all_forecasts)
+        result = create_one_forecast(forecast, x)
+        done_forecast.append(result)
+    return done_forecast
 
 
 if __name__ == '__main__':

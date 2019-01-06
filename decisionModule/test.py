@@ -1,7 +1,8 @@
 from decisionModule.rest import get_place_by_name, get_place_by_all_data, get_place_id, get_place_by_coordinates, \
     is_acceptable_distance, get_all_forecasts_for, get_actual_weather, get_all_actual_weathers, get_dir_by_id, \
-    get_type_by_id, WeatherAnswer, change_to_json, change_record_to_weather_answer
+    get_type_by_id, WeatherAnswer, change_to_json, change_record_to_weather_answer, decide
 from datetime import datetime
+import numpy as np
 
 # print(is_acceptable_distance(51.10001, 51.10001-0.004, 'latitude'))
 # print(is_acceptable_distance(51.10001, 51.10001+0.004, 'latitude'))
@@ -78,19 +79,19 @@ date_utc = datetime.utcfromtimestamp(actual_date)
 print(date_utc)
 
 date_set = set()
-for i in all_forecasts:
-    date_set.add(i.Date)
+for all in all_forecasts:
+    if actual_weather.Date <= all.Date:
+        date_set.add(all.Date)
+
 print(len(date_set))
 date_set = sorted(date_set)
 for i in date_set:
-    print(datetime.fromtimestamp(i/1000))
+    print(datetime.utcfromtimestamp(i/1000))
+    # print(datetime.fromtimestamp(i/1000))
 
 
-# TEST
-def select_our_weather_forecast(actual_date, all_forecasts):
-    result = []
-    return result
-
+done_forecast = decide(actual_weather, all_forecasts)
+print(done_forecast.__len__())
 
 
 # timestamps
