@@ -1,7 +1,7 @@
 from decisionModule.rest import get_place_by_name, get_place_by_all_data, get_place_id, get_place_by_coordinates, \
     is_acceptable_distance, get_all_forecasts_for, get_actual_weather, get_all_actual_weathers, get_dir_by_id, \
-    get_type_by_id, WeatherAnswer, change_to_json
-
+    get_type_by_id, WeatherAnswer, change_to_json, change_record_to_weather_answer
+from datetime import datetime
 
 # print(is_acceptable_distance(51.10001, 51.10001-0.004, 'latitude'))
 # print(is_acceptable_distance(51.10001, 51.10001+0.004, 'latitude'))
@@ -51,41 +51,50 @@ print(len(result))
 result = get_all_actual_weathers(1, 1546012049000)
 print(len(result))
 
-result = get_actual_weather(1)
-print(str(result.Id) + " " + str(result.Temperature))
+actual_weather = get_actual_weather(1)
+print(str(actual_weather.Id) + " " + str(actual_weather.Temperature))
 
 
 # TEST get_forecasts_for_place
 id_place = get_place_id(latitude=latitude, longitude=longitude, name=name, country=country)
 print(id_place)
-result = get_all_forecasts_for(id_place=id_place)
-print(len(result))
-print(get_dir_by_id(result[1].Weather_TypeId))
+all_forecasts = get_all_forecasts_for(id_place=id_place)
+print(len(all_forecasts))
 
-answer = []
-# for i in result:
+# # TEST change_record_to_weather_answer
+# answer = []
+# list = []
+# e = change_record_to_weather_answer(result[0])
+# print(e)
+# print(change_record_to_weather_answer(result[1]))
+# print(change_record_to_weather_answer(result[2]))
+# print(e.__dict__)
+# list.append(e)
+# list.append(e)
+# print(change_to_json(list))
+actual_date = actual_weather.Date/1000
+print(actual_date)
+date_utc = datetime.utcfromtimestamp(actual_date)
+print(date_utc)
 
-def chanege_record_to_WeatherAnswer(i):
-    weather_type = get_type_by_id(i.Weather_TypeId)
-    wind_dir = get_dir_by_id(i.Wind_DirId)
-    answer = WeatherAnswer(id_place, name, latitude, longitude, country, wind_dir.Direction, weather_type.Main,
-                           weather_type.Description, i.Date, i.Temperature_Max, i.Temperature_Min, i.Temperature,
-                           i.Cloud_cover, i.Humidity_percent, i.Pressure_mb, i.Wind_speed, i.IsForecast)
-    return answer
+date_set = set()
+for i in all_forecasts:
+    date_set.add(i.Date)
+print(len(date_set))
+date_set = sorted(date_set)
+for i in date_set:
+    print(datetime.fromtimestamp(i/1000))
 
 
-list = []
-e = chanege_record_to_WeatherAnswer(result[0])
-print(e)
-print(chanege_record_to_WeatherAnswer(result[1]))
-print(chanege_record_to_WeatherAnswer(result[2]))
-print(e.__dict__)
-list.append(e)
-list.append(e)
-print(change_to_json(list))
+# TEST
+def select_our_weather_forecast(actual_date, all_forecasts):
+    result = []
+    return result
 
-# # timestamps
-# from datetime import datetime
+
+
+# timestamps
+#
 # ts = int("1546012049000")/1000
 #
 # # if you encounter a "year is out of range" error the timestamp
