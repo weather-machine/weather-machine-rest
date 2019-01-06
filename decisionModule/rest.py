@@ -31,7 +31,7 @@ class WindDirection(Base):
     Direction = Column(String)
 
     def __str__(self):
-        return self.direction
+        return self.Direction
 
     def as_dict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
@@ -95,13 +95,13 @@ class WeatherForecast(Base):
     Weather_TypeId = Column(ForeignKey('Weather_Type.Id'))
     Wind_DirId = Column(ForeignKey('Wind_Direction.Id'))
     Date = Column(BIGINT)
-    Temperature = Column(DOUBLE)
-    Temperature_Max = Column(DOUBLE)
-    Temperature_Min = Column(DOUBLE)
-    Cloud_cover = Column(DOUBLE)
-    Humidity_percent = Column(DOUBLE)
-    Pressure_mb = Column(DOUBLE)
-    Wind_speed = Column(DOUBLE)
+    Temperature = Column(Integer)
+    Temperature_Max = Column(Integer)
+    Temperature_Min = Column(Integer)
+    Cloud_cover = Column(Integer)
+    Humidity_percent = Column(Integer)
+    Pressure_mb = Column(Integer)
+    Wind_speed = Column(Integer)
     IsForecast = Column(Integer)
 
     def __init__(self, PlaceId, Weather_TypeId, Wind_DirId, Date, Temperature_Max, Temperature_Min, Temperature,
@@ -125,6 +125,38 @@ class WeatherForecast(Base):
 
     def as_dict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+
+
+class WeatherAnswer:
+
+    def __init__(self, PlaceId, Name, Latitude, Longitude, Country, Wind_DirId, Direction, Main, Description, Date,
+                 Temperature_Max, Temperature_Min, Temperature, Cloud_cover, Humidity_percent, Pressure_mb,
+                 Wind_speed, IsForecast):
+        self.PlaceId = PlaceId
+        self.Name = Name
+        self.Latitude = Latitude
+        self.Logitude = Longitude
+        self.Country = Country
+        self.Wind_DirId = Wind_DirId
+        self.Direction = Direction
+        self.Main = Main
+        self.Description = Description
+        self.Date = Date
+        self.Temperature_Max = Temperature_Max
+        self.Temperature_Min = Temperature_Min
+        self.Temperature = Temperature
+        self.Cloud_cover = Cloud_cover
+        self.Humidity_percent = Humidity_percent
+        self.Pressure_mb = Pressure_mb
+        self.Wind_speed = Wind_speed
+        self.IsForecast = IsForecast
+
+    def __str__(self):
+        return "Place " + self.Name.__str__() + " - " + str(self.Main) + " " + str(self.Temperature) + " " + \
+               str(self.Date) + " " + str(self.Wind_speed) + " " + str(self.Direction)
+
+    def as_dict(self):
+        return self.__dict__
 
 
 Base.prepare(engine, reflect=True) # deklaracja klas koniecznie przed ta linijka
@@ -183,9 +215,24 @@ def post_forecast():
 @app.route('/forecastForPlace', methods=['GET'])
 @cross_origin()
 def get_forecasts_for_place():
-    data = request.get_json()
-    id = get_place_id(latitude=data["Latitude"], longitude=data["Longitude"], name=data["Name"], country=data["Country"])
-    result = get_all_forecasts_for(id_place=id)
+    # data = request.get_json()
+    # id_place = get_place_id(latitude=data["Latitude"], longitude=data["Longitude"], name=data["Name"], country=data["Country"])
+    #TO TEST:
+    latitude = 51.107883
+    longitude = 17.038538
+    name = 'Wroclaw'
+    country = 'Poland'
+    id_place = get_place_id(latitude=latitude, longitude=longitude, name=name, country=country)
+    # END TO TEST
+    forecasts = get_all_forecasts_for(id_place=id_place)
+    resul = []
+    resul.append(get_actual_weather(id_place))
+    # TODO remove
+    for i in range(0, 24):
+        resul.append(forecasts[i])
+    #end todo
+
+    result = change_all_record_to_wa(resul, id_place, name, latitude, longitude, country)
     return change_to_json(result), 200, {'ContentType':'application/json'}
 
 
@@ -214,6 +261,23 @@ def get_type_or_calculate(main, desc):
     if id_wt is None:
         id_wt = insert_type(main, desc)
     return id_wt
+
+
+def change_all_record_to_wa(records, id_place, name, latitude, longitude, country):
+    result = []
+    for forecast in records:
+        result.append(change_record_to_weather_answer(id_place, name, latitude, longitude, country, forecast))
+    return result
+
+
+def change_record_to_weather_answer(id_place, name, latitude, longitude, country, forecast):
+    weather_type = get_type_by_id(forecast.Weather_TypeId)
+    wind_dir = get_dir_by_id(forecast.Wind_DirId)
+    answer = WeatherAnswer(id_place, name, latitude, longitude, country, wind_dir.Id, wind_dir.Direction,
+                           weather_type.Main, weather_type.Description, forecast.Date, forecast.Temperature_Max,
+                           forecast.Temperature_Min, forecast.Temperature, forecast.Cloud_cover,
+                           forecast.Humidity_percent, forecast.Pressure_mb, forecast.Wind_speed, forecast.IsForecast)
+    return answer
 
 
 # DATABASE OPERATIONS:
@@ -251,6 +315,18 @@ def get_type(main, desc):
     session.close()
     for wt in session.query(WeatherType).filter_by(Main=main, Description=desc):
         return wt.Id
+
+
+def get_type_by_id(id):
+    session = Session(engine)
+    session.close()
+    return session.query(WeatherType).filter_by(Id=id).first()
+
+
+def get_dir_by_id(id):
+    session = Session(engine)
+    session.close()
+    return session.query(WindDirection).filter_by(Id=id).first()
 
 
 def get_all_forecasts_for(id_place):
