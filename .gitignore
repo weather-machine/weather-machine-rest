@@ -1,3 +1,5 @@
 .idea/
 __pycache__/
 decisionModule/credentials.py
+credentials.py
+*.pyc

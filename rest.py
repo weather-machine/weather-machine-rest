@@ -9,7 +9,7 @@ from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import Session
 
 import simplejson as json
-import decisionModule.credentials as cred
+import credentials as cred
 
 
 app = Flask(__name__)

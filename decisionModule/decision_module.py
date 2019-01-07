@@ -12,7 +12,7 @@ from datetime import datetime
 import simplejson as json
 import numpy as np
 
-import decisionModule.credentials as cred
+import credentials as cred
 
 
 app = Flask(__name__)
