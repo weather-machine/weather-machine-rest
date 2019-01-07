@@ -11,6 +11,7 @@ from datetime import datetime
 
 import simplejson as json
 import numpy as np
+import operator
 
 import credentials as cred
 
@@ -182,6 +183,7 @@ def get_forecasts_for_place():
     # latitude = 51.107883
     # longitude = 17.038538
     # name = 'Wroclaw'
+    # country = 'Poland'
     # actual_time = '1546013126000'
     # id_place, added = get_place_id(latitude=latitude, longitude=longitude, name=name, country=country)
     # END TO TEST
@@ -193,7 +195,7 @@ def get_forecasts_for_place():
     actual_time = actual_time + "000"
     actual_time = int(actual_time)
     actual_weather = get_actual_weather(id_place, actual_time)
-    done_forecast = decide(actual_weather, all_forecasts, actual_time)
+    done_forecast = decide(actual_weather, all_forecasts, actual_time, id_place)
 
     result = change_all_record_to_wa(done_forecast, id_place, name, latitude, longitude, country)
     return change_to_json(result), 200, {'ContentType': 'application/json'}
@@ -340,11 +342,15 @@ def filter_result_to_format(forecasts):
 
 
 # RETURNS LIST OF FORECAST FOR PLACE
-def decide(actual_weather, all_forecasts, actual_time):
+def decide(actual_weather, all_forecasts, actual_time, id_place):
     if actual_weather is None:
-        #TODO test
-        done_forecast = []
+        the_most_actual = get_the_most_actual_weather(id_place)
+        if the_most_actual is None:
+            done_forecast = []
+        else:
+            done_forecast = [the_most_actual]
     else:
+        # first forecast - actual weather
         done_forecast = [actual_weather]
     # creating set of date >= actual
     date_set = set()
@@ -352,8 +358,6 @@ def decide(actual_weather, all_forecasts, actual_time):
         if actual_time <= elem.Date:
             date_set.add(elem.Date)
     date_set = sorted(date_set)
-
-    # first forecast - actual weather
     # creating one forecast for datetime
     for x in date_set:
         forecast = get_all_forecast_for_timestamp(x, all_forecasts)
@@ -422,21 +426,13 @@ def get_actual_weather(id_place, actual_time):
     not_null_weathers = []
     if len(all_weathers) > 0:
         for weather in all_weathers:
-            if (weather.Weather_TypeId is not None) & (weather.Wind_DirId is not None) & (weather.Temperature is not None):
+            if (weather.Weather_TypeId is not None) & (weather.Wind_DirId is not None) & \
+                    (weather.Temperature is not None):
                 not_null_weathers.append(weather)
     if len(not_null_weathers) > 0:
         return not_null_weathers[0]
     else:
         return None
-
-
-def get_previous_weather(id_place, date):
-    session = Session(engine)
-    session.close()
-    results = []
-    for wf in session.query(WeatherForecast).filter_by(PlaceId=id_place, IsForecast=0):
-        results.append(wf)
-    return results[len(results)-1]
 
 
 def get_all_actual_weathers(id_place, date):
@@ -447,7 +443,20 @@ def get_all_actual_weathers(id_place, date):
         result.append(wf)
     return result
 
-# get_all_actual_weathers(1, '1546013126000')
+
+def get_the_most_actual_weather(id_place):
+    session = Session(engine)
+    session.close()
+    result = []
+    for wf in session.query(WeatherForecast).filter_by(PlaceId=id_place, IsForecast=0):
+        result.append(wf)
+    if len(result) > 0:
+        sorted_x = sorted(result, key=operator.attrgetter('Date'))
+        return sorted_x[len(sorted_x)-1]
+    else:
+        return None
+
+
 # official - TO USE:
 def get_place_id(latitude, longitude, name, country):
     place = get_place_by_all_data(latitude, longitude, name, country)
