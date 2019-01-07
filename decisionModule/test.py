@@ -85,9 +85,8 @@ for all in all_forecasts:
 
 print(len(date_set))
 date_set = sorted(date_set)
-for i in date_set:
-    print(datetime.utcfromtimestamp(i/1000))
-    # print(datetime.fromtimestamp(i/1000))
+# for i in date_set:
+#     print(datetime.utcfromtimestamp(i/1000))
 
 
 done_forecast = decide(actual_weather, all_forecasts)
@@ -96,8 +95,11 @@ print(done_forecast.__len__())
 
 # timestamps
 #
-# ts = int("1546012049000")/1000
+ts = int("1546012049000")/1000
 #
+print("TEST")
+print(datetime.fromtimestamp(ts).day)
+
 # # if you encounter a "year is out of range" error the timestamp
 # # may be in milliseconds, try `ts /= 1000` in that case
 # print(datetime.utcfromtimestamp(ts))

@@ -476,6 +476,77 @@ def create_one_forecast(list_of_forecasts, date):
                  Cloud_cover, Humidity_percent, Pressure_mb, Wind_speed, IsForecast)
 
 
+def filter_result_to_format(forecasts):
+    if len(forecasts) <= 25:
+        return forecasts
+    else:
+        hours_forecasts = []
+        current_date_day = datetime.fromtimestamp(forecasts[0].Date/1000).day
+        first_day = []
+        second_day = []
+        third_day = []
+        fourth_day = []
+        fifth_day = []
+        for i in range(0, 25):
+            hours_forecasts.append(forecasts[i])
+            if datetime.fromtimestamp(forecasts[i].Date/1000).day != current_date_day:
+                first_day.append(forecasts[i])
+        temp = 50-len(first_day)
+        if len(forecasts) >= temp:
+            for i in range(26, temp):
+                first_day.append(forecasts[i])
+            temp = temp + 1
+
+            # 2 day
+            if len(forecasts) >= temp + 24:
+                for i in range(temp, temp + 24):
+                    second_day.append(forecasts[i])
+                temp = temp + 25
+
+                # 3 day
+                if len(forecasts) >= temp + 24:
+                    for i in range(temp, temp + 24):
+                        third_day.append(forecasts[i])
+                    temp = temp + 25
+
+                    # 4 day
+                    if len(forecasts) >= temp + 24:
+                        for i in range(temp, temp + 24):
+                            fourth_day.append(forecasts[i])
+                        temp = temp + 25
+
+                        # 5 day
+                        if len(forecasts) >= temp + 24:
+                            for i in range(temp, temp + 24):
+                                fifth_day.append(forecasts[i])
+                        else:
+                            for i in range(temp, len(forecasts)):
+                                fifth_day.append(forecasts[i])
+                    else:
+                        for i in range(temp, len(forecasts)):
+                            fourth_day.append(forecasts[i])
+                else:
+                    for i in range(temp, len(forecasts)):
+                        third_day.append(forecasts[i])
+            else:
+                for i in range(temp, len(forecasts)):
+                    second_day.append(forecasts[i])
+        else:
+            for i in range(25, len(forecasts)):
+                first_day.append(forecasts[i])
+        if len(first_day) > 0:
+            hours_forecasts.append(create_one_forecast(first_day, first_day[0].Date))
+        if len(second_day) > 0:
+            hours_forecasts.append(create_one_forecast(second_day, second_day[0].Date))
+        if len(third_day) > 0:
+            hours_forecasts.append(create_one_forecast(third_day, third_day[0].Date))
+        if len(fourth_day) > 0:
+            hours_forecasts.append(create_one_forecast(fourth_day, fourth_day[0].Date))
+        if len(fifth_day) > 0:
+            hours_forecasts.append(create_one_forecast(fifth_day, fifth_day[0].Date))
+        return hours_forecasts
+
+
 # RETURNS LIST OF FORECAST FOR PLACE
 def decide(actual_weather, all_forecasts):
     # creating set of date >= actual
@@ -492,6 +563,7 @@ def decide(actual_weather, all_forecasts):
         forecast = get_all_forecast_for_timestamp(x, all_forecasts)
         result = create_one_forecast(forecast, x)
         done_forecast.append(result)
+    done_forecast = filter_result_to_format(done_forecast)
     return done_forecast
 
 
