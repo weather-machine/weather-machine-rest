@@ -476,6 +476,15 @@ def create_one_forecast(list_of_forecasts, date):
                  Cloud_cover, Humidity_percent, Pressure_mb, Wind_speed, IsForecast)
 
 
+def get_night_forecast(forecasts):
+    result = forecasts[0]
+    for i in forecasts:
+        if i.Temperature < result.Temperature:
+            result = i
+    return result
+
+
+
 def filter_result_to_format(forecasts):
     if len(forecasts) <= 25:
         return forecasts
@@ -535,6 +544,8 @@ def filter_result_to_format(forecasts):
             for i in range(25, len(forecasts)):
                 first_day.append(forecasts[i])
         if len(first_day) > 0:
+            hours_forecasts.append(get_night_forecast(first_day))
+            print(datetime.utcfromtimestamp(get_night_forecast(first_day).Date/1000))
             hours_forecasts.append(create_one_forecast(first_day, first_day[0].Date))
         if len(second_day) > 0:
             hours_forecasts.append(create_one_forecast(second_day, second_day[0].Date))
@@ -544,6 +555,7 @@ def filter_result_to_format(forecasts):
             hours_forecasts.append(create_one_forecast(fourth_day, fourth_day[0].Date))
         if len(fifth_day) > 0:
             hours_forecasts.append(create_one_forecast(fifth_day, fifth_day[0].Date))
+        print(len(hours_forecasts))
         return hours_forecasts
 
 
