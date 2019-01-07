@@ -169,7 +169,7 @@ conn = engine.connect()
 print("Polaczenie nawiazane")
 
 
-@app.route('/forecastForPlace', methods=['POST'])
+@app.route('/forecastForPlace', methods=['GET', 'POST'])
 @cross_origin()
 def get_forecasts_for_place():
     data = request.get_json()
@@ -177,17 +177,23 @@ def get_forecasts_for_place():
     longitude = data["Longitude"]
     name = data["Name"]
     country = data["Country"]
-    id_place = get_place_id(latitude=latitude, longitude=longitude, name=name, country=country)
+    id_place, added = get_place_id(latitude=latitude, longitude=longitude, name=name, country=country)
     # TO TEST:
     # latitude = 51.107883
     # longitude = 17.038538
     # name = 'Wroclaw'
-    # country = 'Poland'
-    # id_place = get_place_id(latitude=latitude, longitude=longitude, name=name, country=country)
+    # actual_time = '1546013126000'
+    # id_place, added = get_place_id(latitude=latitude, longitude=longitude, name=name, country=country)
     # END TO TEST
+    if added:
+        return json.dumps({'status': 'place added'}), 200, {'ContentType': 'application/json'}
     all_forecasts = get_all_forecasts_for(id_place=id_place)
-    actual_weather = get_actual_weather(id_place)
-    done_forecast = decide(actual_weather, all_forecasts)
+    actual_time = datetime.utcnow().timestamp()
+    actual_time = "%.0f" % actual_time
+    actual_time = actual_time + "000"
+    actual_time = int(actual_time)
+    actual_weather = get_actual_weather(id_place, actual_time)
+    done_forecast = decide(actual_weather, all_forecasts, actual_time)
 
     result = change_all_record_to_wa(done_forecast, id_place, name, latitude, longitude, country)
     return change_to_json(result), 200, {'ContentType': 'application/json'}
@@ -334,14 +340,19 @@ def filter_result_to_format(forecasts):
 
 
 # RETURNS LIST OF FORECAST FOR PLACE
-def decide(actual_weather, all_forecasts):
+def decide(actual_weather, all_forecasts, actual_time):
+    if actual_weather is None:
+        #TODO test
+        done_forecast = []
+    else:
+        done_forecast = [actual_weather]
     # creating set of date >= actual
     date_set = set()
     for elem in all_forecasts:
-        if actual_weather.Date <= elem.Date:
+        if actual_time <= elem.Date:
             date_set.add(elem.Date)
     date_set = sorted(date_set)
-    done_forecast = [actual_weather]
+
     # first forecast - actual weather
     # creating one forecast for datetime
     for x in date_set:
@@ -406,17 +417,26 @@ def get_all_forecasts_for(id_place):
     return result
 
 
-def get_actual_weather(id_place):
-    actual_time = datetime.utcnow().timestamp()
-    actual_time = "%.0f" % actual_time
-    actual_time = actual_time + "000"
-    actual_time = int(actual_time)
+def get_actual_weather(id_place, actual_time):
     all_weathers = get_all_actual_weathers(id_place, actual_time)
     not_null_weathers = []
-    for weather in all_weathers:
-        if (weather.Weather_TypeId is not None) & (weather.Wind_DirId is not None) & (weather.Temperature is not None):
-            not_null_weathers.append(weather)
-    return not_null_weathers[0]
+    if len(all_weathers) > 0:
+        for weather in all_weathers:
+            if (weather.Weather_TypeId is not None) & (weather.Wind_DirId is not None) & (weather.Temperature is not None):
+                not_null_weathers.append(weather)
+    if len(not_null_weathers) > 0:
+        return not_null_weathers[0]
+    else:
+        return None
+
+
+def get_previous_weather(id_place, date):
+    session = Session(engine)
+    session.close()
+    results = []
+    for wf in session.query(WeatherForecast).filter_by(PlaceId=id_place, IsForecast=0):
+        results.append(wf)
+    return results[len(results)-1]
 
 
 def get_all_actual_weathers(id_place, date):
@@ -427,21 +447,22 @@ def get_all_actual_weathers(id_place, date):
         result.append(wf)
     return result
 
-
+# get_all_actual_weathers(1, '1546013126000')
 # official - TO USE:
 def get_place_id(latitude, longitude, name, country):
     place = get_place_by_all_data(latitude, longitude, name, country)
     if place is not None:
-        return place.Id
+        return place.Id, False
     place = get_place_by_coordinates(latitude, longitude)
     if place is not None:
-        return place.Id
+        return place.Id, False
     place = get_place_by_name(name, country)
-    lat_dist = is_acceptable_distance(latitude, place.Latitude, 'latitude')
-    long_dist = is_acceptable_distance(longitude, place.Longitude, 'longitude')
-    if lat_dist & long_dist:
-        return place.Id
-    return insert_place(name, latitude, longitude, country)
+    if place is not None:
+        lat_dist = is_acceptable_distance(latitude, place.Latitude, 'latitude')
+        long_dist = is_acceptable_distance(longitude, place.Longitude, 'longitude')
+        if lat_dist & long_dist:
+            return place.Id, False
+    return insert_place(name, latitude, longitude, country), True
 
 
 # UTILS:
