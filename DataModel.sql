@@ -5,7 +5,7 @@ CREATE TABLE `Place` (
   `Name` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   `Latitude` double  NULL,
   `Longitude` double  NULL,
-  `Country` varchar(10) COLLATE utf8_unicode_ci DEFAULT NULL
+  `Country` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 CREATE TABLE `Weather_Forecast` (
