@@ -169,19 +169,21 @@ conn = engine.connect()
 print("Polaczenie nawiazane")
 
 
-@app.route('/forecastForPlace', methods=['GET'])
+@app.route('/forecastForPlace', methods=['POST'])
 @cross_origin()
 def get_forecasts_for_place():
-    #
-    # data = request.get_json()
-    # id_place = get_place_id(latitude=data["Latitude"], longitude=data["Longitude"], name=data["Name"],
-    # country=data["Country"])
-    # TO TEST:
-    latitude = 51.107883
-    longitude = 17.038538
-    name = 'Wroclaw'
-    country = 'Poland'
+    data = request.get_json()
+    latitude = data["Latitude"]
+    longitude = data["Longitude"]
+    name = data["Name"]
+    country = data["Country"]
     id_place = get_place_id(latitude=latitude, longitude=longitude, name=name, country=country)
+    # TO TEST:
+    # latitude = 51.107883
+    # longitude = 17.038538
+    # name = 'Wroclaw'
+    # country = 'Poland'
+    # id_place = get_place_id(latitude=latitude, longitude=longitude, name=name, country=country)
     # END TO TEST
     all_forecasts = get_all_forecasts_for(id_place=id_place)
     actual_weather = get_actual_weather(id_place)
@@ -405,7 +407,10 @@ def get_all_forecasts_for(id_place):
 
 
 def get_actual_weather(id_place):
-    actual_time = 1546012049000  # TODO change to time.time()
+    actual_time = datetime.utcnow().timestamp()
+    actual_time = "%.0f" % actual_time
+    actual_time = actual_time + "000"
+    actual_time = int(actual_time)
     all_weathers = get_all_actual_weathers(id_place, actual_time)
     not_null_weathers = []
     for weather in all_weathers:
