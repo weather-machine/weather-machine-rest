@@ -471,10 +471,21 @@ def get_place_id(latitude, longitude, name, country):
         long_dist = is_acceptable_distance(longitude, place.Longitude, 'longitude')
         if lat_dist & long_dist:
             return place.Id, False
-    return insert_place(name, latitude, longitude, country), True
+        else:
+            return insert_place(name, latitude, longitude, country), True
+    else:
+        return insert_place(name, latitude, longitude, country), True
 
 
 # UTILS:
+def format_number(number):
+    if number is None:
+        return None
+    else:
+        result = "%.2f" % number
+        return float(result)
+
+
 def change_to_json(values):
     dict_list = change_to_dict(values)
     return json.dumps(dict_list)
@@ -514,9 +525,11 @@ def change_record_to_weather_answer(id_place, name, latitude, longitude, country
     weather_type = get_type_by_id(forecast.Weather_TypeId)
     wind_dir = get_dir_by_id(forecast.Wind_DirId)
     answer = WeatherAnswer(id_place, name, latitude, longitude, country, wind_dir.Id, wind_dir.Direction,
-                           weather_type.Main, weather_type.Description, forecast.Date, forecast.Temperature_Max,
-                           forecast.Temperature_Min, forecast.Temperature, forecast.Cloud_cover,
-                           forecast.Humidity_percent, forecast.Pressure_mb, forecast.Wind_speed, forecast.IsForecast)
+                           weather_type.Main, weather_type.Description, forecast.Date,
+                           format_number(forecast.Temperature_Max), format_number(forecast.Temperature_Min),
+                           format_number(forecast.Temperature), format_number(forecast.Cloud_cover),
+                           format_number(forecast.Humidity_percent), format_number(forecast.Pressure_mb),
+                           format_number(forecast.Wind_speed), forecast.IsForecast)
     return answer
 
 
