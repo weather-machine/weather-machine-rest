@@ -224,7 +224,7 @@ def create_one_forecast(list_of_forecasts, date):
         humidity_percent.append(i.Humidity_percent)
         pressure_mb.append(i.Pressure_mb)
         wind_speed.append(i.Wind_speed)
-    weather_type_id = get_most_common(weather_type_id)
+    weather_type_id = get_most_common(remove_index(weather_type_id, 1))
     wind_dir_id = get_most_common(wind_dir_id)
     temperature = list(filter(None.__ne__, temperature))
     if not temperature:
@@ -381,12 +381,16 @@ def insert_place(name, latitude, longitude, country):
 def get_type_by_id(id_type):
     session = Session(engine)
     session.close()
+    # for result in session.query(WeatherType).filter_by(Id=id_type):
+    #     return result
     return session.query(WeatherType).filter_by(Id=id_type).first()
 
 
 def get_dir_by_id(id_wind):
     session = Session(engine)
     session.close()
+    # for result in session.query(WindDirection).filter_by(Id=id_wind):
+    #     return result
     return session.query(WindDirection).filter_by(Id=id_wind).first()
 
 
@@ -496,6 +500,14 @@ def change_to_dict(table_result):
     for t in table_result:
         result.append(t.as_dict())
     return result
+
+
+def remove_index(lst, index):
+    results = []
+    for i in lst:
+        if i != index:
+            results.append(i)
+    return results
 
 
 def get_most_common(lst):
