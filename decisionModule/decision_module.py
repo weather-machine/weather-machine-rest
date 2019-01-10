@@ -89,6 +89,11 @@ class WeatherType(Base):
         self.Main = main
         self.Description = description
 
+    def __init__(self, id_type, main, description):
+        self.Id = id_type
+        self.Main = main
+        self.Description = description
+
     def __str__(self):
         return self.Id.__str__() + " - " + self.Main
 
@@ -398,6 +403,56 @@ def get_dir_by_id(id_wind):
     return session.query(WindDirection).filter_by(Id=id_wind).first()
 
 
+def get_type_from_enum_list(id_type):
+    all_types = [
+        (1, 'unknown'),
+        (2, 'Pogodnie'),
+        (3, 'Bezchmurnie'),
+        (4, 'Przewaznie pogodnie'),
+        (5, 'Przewaznie bezchmurnie'),
+        (6, 'Zamglone slonce'),
+        (7, 'Mgla'),
+        (8, 'Przelotne zachmurzenie'),
+        (9, 'Przewaga slonca nad chmurami'),
+        (10, 'Rozproszone chmury'),
+        (11, 'Polowiczne zachmurzenie'),
+        (12, 'Slonce i chmury'),
+        (13, 'Wysokie chmury'),
+        (14, 'Przewaga chmur nad sloncem'),
+        (15, 'Polowicznie slonecznie'),
+        (16, 'Rozbite chmury'),
+        (17, 'Przewaznie pochmurno'),
+        (18, 'Chmury'),
+        (19, 'Pochmurno'),
+        (20, 'Niskie chmury'),
+        (21, 'Lekka mgla'),
+        (22, 'Mgla'),
+        (23, 'Gesta mgla'),
+        (24, 'Mgla lodowa'),
+        (25, 'Burza piaskowa'),
+        (26, 'Burza pylu'),
+        (27, 'Zwiekaszajace sie zachmurzenie'),
+        (28, 'Zmniejszajace sie zachmurzenie'),
+        (29, 'Rozpogodzenie'),
+        (30, 'Przeswity slonca'),
+        (31, 'Wczesna mgla, po ktorej nastepuje rozpogodzenie'),
+        (32, 'Popoludniowe zachmurzenie'),
+        (33, 'Poranne zachmurzenie'),
+        (34, 'Upalnie'),
+        (35, 'Niski poziom zamglenia'),
+        (36, 'Wysokie chmury'),
+        (37, 'Jasno'),
+        (38, 'Przemijajace chmury'),
+        (39, 'Wiecej slonca niz chmur'),
+        (40, 'Wiecej chmur niz slonca'),
+        (41, 'Przewaznie jasno')
+    ]
+    for number, value in all_types:
+        if number == id_type:
+            return WeatherType(number, value, 'unknown')
+    return None
+
+
 def get_dir_from_enum_list(id_dir):
     all_directions = [(1, 'N'),
                       (2, 'NNE'),
@@ -565,7 +620,9 @@ def change_all_record_to_wa(records, id_place, name, latitude, longitude, countr
 
 
 def change_record_to_weather_answer(id_place, name, latitude, longitude, country, forecast):
-    weather_type = get_type_by_id(forecast.Weather_TypeId)
+    weather_type = get_type_from_enum_list(int(forecast.Weather_TypeId))
+    if weather_type is None:
+        weather_type = get_type_by_id(forecast.Weather_TypeId)
     wind_dir = get_dir_from_enum_list(int(forecast.Wind_DirId))
     if wind_dir is None:
         wind_dir = get_dir_by_id(forecast.Wind_DirId)
