@@ -512,7 +512,7 @@ def remove_index(lst, index):
 
 def get_most_common(lst):
     if len(lst) == 0:
-        return ''
+        return 1
     else:
         return max(set(lst), key=lst.count)
 
