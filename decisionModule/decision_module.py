@@ -482,7 +482,7 @@ def format_number(number):
     if number is None:
         return None
     else:
-        result = "%.2f" % number
+        result = "%.1f" % number
         return float(result)
 
 
