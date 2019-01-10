@@ -511,7 +511,10 @@ def remove_index(lst, index):
 
 
 def get_most_common(lst):
-    return max(set(lst), key=lst.count)
+    if len(lst) == 0:
+        return ''
+    else:
+        return max(set(lst), key=lst.count)
 
 
 def is_acceptable_distance(first, second, param):
