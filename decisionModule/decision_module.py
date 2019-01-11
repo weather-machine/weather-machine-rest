@@ -182,19 +182,19 @@ print("Polaczenie nawiazane")
 @app.route('/forecastForPlace', methods=['GET', 'POST'])
 @cross_origin()
 def get_forecasts_for_place():
-    # data = request.get_json()
-    # latitude = data["Latitude"]
-    # longitude = data["Longitude"]
-    # name = data["Name"]
-    # country = data["Country"]
-    # id_place, added = get_place_id(latitude=latitude, longitude=longitude, name=name, country=country)
-    # TO TEST:
-    latitude = 51.107883
-    longitude = 17.038538
-    name = 'Wroclaw'
-    country = 'Poland'
-    actual_time = '1546013126000'
+    data = request.get_json()
+    latitude = data["Latitude"]
+    longitude = data["Longitude"]
+    name = data["Name"]
+    country = data["Country"]
     id_place, added = get_place_id(latitude=latitude, longitude=longitude, name=name, country=country)
+    # TO TEST:
+    # latitude = 51.107883
+    # longitude = 17.038538
+    # name = 'Wroclaw'
+    # country = 'Poland'
+    # actual_time = '1546013126000'
+    # id_place, added = get_place_id(latitude=latitude, longitude=longitude, name=name, country=country)
     # END TO TEST
     if added:
         return json.dumps({'status': 'place added'}), 200, {'ContentType': 'application/json'}
@@ -404,6 +404,10 @@ def get_dir_by_id(id_wind):
 
 
 def get_type_from_enum_list(id_type):
+    if id_type is None:
+        return None
+    else:
+        id_type = int(id_type)
     all_types = [
         (1, 'unknown'),
         (2, 'Pogodnie'),
@@ -454,6 +458,10 @@ def get_type_from_enum_list(id_type):
 
 
 def get_dir_from_enum_list(id_dir):
+    if id_dir is None:
+        return None
+    else:
+        id_dir = int(id_dir)
     all_directions = [(1, 'N'),
                       (2, 'NNE'),
                       (3, 'NE'),
@@ -472,9 +480,8 @@ def get_dir_from_enum_list(id_dir):
                       (16, 'NNW')]
     for number, value in all_directions:
         if number == id_dir:
-            return WindDirection(number,value)
-    else:
-        return None
+            return WindDirection(number, value)
+    return None
 
 
 # get PLACE --3 versions
@@ -620,14 +627,27 @@ def change_all_record_to_wa(records, id_place, name, latitude, longitude, countr
 
 
 def change_record_to_weather_answer(id_place, name, latitude, longitude, country, forecast):
-    weather_type = get_type_from_enum_list(int(forecast.Weather_TypeId))
+    weather_type = get_type_from_enum_list(forecast.Weather_TypeId)
     if weather_type is None:
         weather_type = get_type_by_id(forecast.Weather_TypeId)
-    wind_dir = get_dir_from_enum_list(int(forecast.Wind_DirId))
+    wind_dir = get_dir_from_enum_list(forecast.Wind_DirId)
     if wind_dir is None:
         wind_dir = get_dir_by_id(forecast.Wind_DirId)
-    answer = WeatherAnswer(id_place, name, latitude, longitude, country, wind_dir.Id, wind_dir.Direction,
-                           weather_type.Main, weather_type.Description, forecast.Date,
+    if weather_type is None:
+        weather_type_main = None
+        weather_type_description = None
+    else:
+        weather_type_main = weather_type.Main
+        weather_type_description = weather_type.Description
+    if wind_dir is None:
+        wind_dir_id = None
+        wind_dir_direction = None
+    else:
+        wind_dir_id = wind_dir.Id
+        wind_dir_direction = wind_dir.Direction
+
+    answer = WeatherAnswer(id_place, name, latitude, longitude, country, wind_dir_id, wind_dir_direction,
+                           weather_type_main, weather_type_description, forecast.Date,
                            format_number(forecast.Temperature_Max), format_number(forecast.Temperature_Min),
                            format_number(forecast.Temperature), format_number(forecast.Cloud_cover),
                            format_number(forecast.Humidity_percent), format_number(forecast.Pressure_mb),
